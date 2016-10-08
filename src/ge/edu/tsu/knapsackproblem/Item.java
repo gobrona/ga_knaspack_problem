@@ -1,35 +1,31 @@
 package ge.edu.tsu.knapsackproblem;
 
-/**
- *
- * @author IGobronidze
- */
 public class Item {
 
-    private int v;   // ტევადობა
-    private int b;   // მოგება
+    private int volume;   // ტევადობა
+    private int price;    // ფასი
 
     public Item() {
     }
 
-    public Item(int v, int b) {
-        this.v = v;
-        this.b = b;
+    public Item(int volume, int price) {
+        this.volume = volume;
+        this.price = price;
     }
 
-    public int getV() {
-        return v;
+    public int getVolume() {
+        return volume;
     }
 
-    public void setV(int v) {
-        this.v = v;
+    public void setVolume(int volume) {
+        this.volume = volume;
     }
 
-    public int getB() {
-        return b;
+    public int getPrice() {
+        return price;
     }
 
-    public void setB(int b) {
-        this.b = b;
+    public void setPrice(int price) {
+        this.price = price;
     }
 }

@@ -3,61 +3,194 @@ package ge.edu.tsu.knapsackproblem;
 import java.util.ArrayList;
 import java.util.Random;
 
-/**
- *
- * @author IGobronidze
- */
 public class GA {
     
-    private static long generation = 0;
+    private static long generation = 0;                // თაობების რაოდენობა
     
-    private static Population population;
-    private static ArrayList<Integer> fitnessList;
+    private static Population population;              // პოპულაცია
+    private static ArrayList<Integer> fitnessList;     // ფიტნესის მნიშვნელობები პოპულაციისთვის
     
     /**
-     * GA ალგორითმი. ალგორითმი ეძებს საუკეთესო გამოსავალს, მასიმალურად გაავსოს
-     * ზურგჩანთა ნივთებით ისე, რომ არ ასცდეს ზღვარს
-     *
+     * ამოცანის პირობა - მოცემულიდ ნივთებით შეივსოს ზურგჩანთა ისე,
+     * რომ ნივთების ჯამური მოცულობა არ ასცდეს ჩანთის მოცულობას და
+     * ნივთების ჯამური ფასი იყოს მაქსიმალური.
+     * 
+     * ვიყენებთ გენეტიკურ ალგორითმს, რომელიც ყოველ იტერაციაზე ქმნის 
+     * ახალი თაობის წარმომადგენლებს, სანამ მთელი თაობა არ იქნება მსგავსი(95%).
+     * გამოყენებულია გენეტიკური ოპერატორები - ამორჩევა რულეტკის მეთოდით,
+     * crossover ერთი წერთილით და მუტაცია.
      */
-    public static void solveProblem() {
-        population = Population.initPopulation();         // საწყისი პოპულაცია
+    public static void solveProblem() throws InterruptedException{
+        population = Population.initPopulation();
         while (true) {
-            generation++;
-            int min = Integer.MAX_VALUE;
-            int m = 0;
-            int k = 0;
-            fitnessList = new ArrayList<Integer>();
+            // თაობის მომატება
+            generation++;                                           
+            // ფიტნესების დათვლა
+            fitnessList = new ArrayList<Integer>();                 
             for (Chromosome c : population.getChromosomes()) {
                 fitnessList.add(c.fitness());
-                if (c.fitness() < min) {
-                    m = k;
-                    min = c.fitness();
-                }
-                k++;
             }
-            mutation(population.getChromosomes().get(m));
-            try {
-                Thread.sleep(Data.sleepTimeBeteenIteration);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            System.out.println("საუკეთესო ინდივიდი - " + getBestAnswer().fitness() + 
-                    "      ალბათობა პოპულაციაში - " + percentageOfSames(fitnessList) + "      თაობა - " + generation);
-            if (percentageOfSames(fitnessList) >= 0.95) {
+            // მშობლების ამორჩევა
+            Chromosome parent1 = new Chromosome();
+            Chromosome parent2 = new Chromosome();
+            RouletteWheelSelection(parent1, parent2);
+            // ახალი ინდივიდების შექმნა და ჩანაცვლება
+            crossoverAndReplace(parent1, parent2);
+            // მუტაციის ოპერაცია
+            mutation();
+            // ინფორმაციის გამოტანა
+            Thread.sleep(Data.sleepTimeBeteenIteration);
+            System.out.println("თაობა - " + generation + "     " + 
+                    "საუკეთესოს ფიტნესი - " + getBestAnswer().fitness() + "     " + 
+                    "დამთხვევა პოპულაციაში - " + 100 * percentageOfSames(fitnessList) + "%");
+            // მიზნის სისწორის შემოწმება
+            if (percentageOfSames(fitnessList) >= Data.goalCondition) {
+                // ალგორითმა იპოვა ამონახსნი
+                System.out.println(getBestAnswer());
                 break;
             }
-            RouletteWheelSelection(fitnessList);
         }
-
-        System.out.println(System.lineSeparator() + "საუკეთესო ინდივიდი - " + getBestAnswer().fitness() + 
-                "      საჭირო თაობების რაოდენობა " + generation);
+    }
+    
+     /**
+     * ამორჩევა რულტკის პრინციპით - ყოველი ქრომოსომის ფიტნესის
+     * პროპორციული ალბათობით ირჩევა ორი მშობელი ქრომოსომა
+     *
+     * @param parent1 პირველი მშობელი
+     * @param parent2 მეორე მშობელი
+     */
+    private static void RouletteWheelSelection(Chromosome parent1, Chromosome parent2) {
+        // ვთვლით ფიტნესების ჯამს
+        int fSum = 0;
+        for (int x : fitnessList) {
+            fSum += x;
+        }
+        // ვირჩევთ შემთხვევით რიცხვს 0-დან ჯამამდე
+        Random r = new Random();
+        int s = r.nextInt(fSum);
+        // ვიღებთ ელემენტს, რომელიც შეესაბამა შემთხვევით რიცხვს
+        int i = 0;
+        while (true) {
+            s = s - fitnessList.get(i);
+            if (s < 0) {
+                break;
+            }
+            i++;
+        }
+        // იგივე მეორე ელემეტისთვის
+        int j = 0;
+        s = r.nextInt(fSum);
+        while (true) {
+            s = s - fitnessList.get(j);
+            if (s < 0) {
+                break;
+            }
+            j++;
+        }
+        parent1.setGenes(population.getChromosomes().get(i).getGenes());
+        parent2.setGenes(population.getChromosomes().get(j).getGenes());
+    }
+    
+    /**
+     * ორი ქრომოსომისგან იქმნება ახალი ორი ქრომოსომა ერთ წერტილოვანი
+     * შერწყმის დახმარებით. მიღებული შვილი ქრომოსომები ძველ
+     * პოპულაციაში ანაცვლებს ყველაზე "სუსტ" ინდივიდებს.
+     *
+     * @param parent1 პირველი მშობელი
+     * @param parent2 მეორე მშობელი
+     */
+    private static void crossoverAndReplace(Chromosome parent1, Chromosome parent2) {
+        // წყვეტის წერტილის აღება შემთხვევითად
+        Random r = new Random();
+        int x = r.nextInt(Data.numberOfItems);
+        // crossover
+        Chromosome child1 = new Chromosome(Data.numberOfItems);
+        Chromosome child2 = new Chromosome(Data.numberOfItems);
+        for (int k = 0; k < x; k++) {
+            child1.getGenes().set(k, parent1.getGenes().get(k));
+        }
+        for (int k = x; k < Data.numberOfItems; k++) {
+            child1.getGenes().set(k, parent2.getGenes().get(k));
+        }
+        for (int k = 0; k < x; k++) {
+            child2.getGenes().set(k, parent2.getGenes().get(k));
+        }
+        for (int k = x; k < Data.numberOfItems; k++) {
+            child2.getGenes().set(k, parent2.getGenes().get(k));
+        }
+        // ჩანაცვლება
+        replaceChromosomes(child1, child2);
+    }
+    
+    /**
+     * პოპულაციაში მოიძებნება ორი ყველაზე დაბალი ფიტნესის
+     * მქონე ინდივიდი და ჩანაცვლდება ახალი ინდივიდების მიერ,
+     * რომლებიც მივიღეთ crossover-ის დახმარებით.
+     * 
+     * @param child1 პირველი შვილი
+     * @param child2 მეორე შვილი
+     */
+    private static void replaceChromosomes(Chromosome child1, Chromosome child2) {
+        // ორი მინიმუმი ფიტნესის მქონე ინდივიდების მოძებნა
+        int m1 = 0;
+        for (int i = 0; i<fitnessList.size(); i++) {
+            if (fitnessList.get(i) < fitnessList.get(m1)) {
+                m1 = i;
+            }
+        }
+        int m2 = 0;
+        for (int i = 0; i<fitnessList.size(); i++) {
+            if (m1 != i && fitnessList.get(i) < fitnessList.get(m2)) {
+                m2 = i;
+            }
+        }
+        // ჩანაცვლება
+        population.getChromosomes().set(m1, child1);
+        population.getChromosomes().set(m2, child2);
+    }
+    
+    /**
+     * მუტაციის მეთოდი - მთლიანად ცვლის შემთხვევითად აღებული ქრომოსომის
+     * გენებს (0 -> 1,  1 -> 0). მუტაცია ხდება Data.mutationProbability ალბათობით.
+     *
+     */
+    private static void mutation() {
+        Random random = new Random();
+        double d = random.nextDouble();
+        // ალბათობის შემოწმება
+        if (d > Data.mutationProbability) {
+            return;
+        }
+        // გენების შეცვლა
+        int index = random.nextInt(population.getChromosomes().size());
+        Chromosome chromosome = population.getChromosomes().get(index);
+        for (int i = 0; i < chromosome.getGenes().size(); i++) {
+            chromosome.getGenes().set(i, !chromosome.getGenes().get(i));
+        }
+    }
+    
+    /**
+     * საუკეთესო ფიტნესის მქონე ინდივიდის მოძებნა
+     * 
+     * @return "საუკეთესო" ინდივიდი
+     */
+    private static Chromosome getBestAnswer() {
+        ArrayList<Chromosome> chromosomes = population.getChromosomes();
+        Chromosome best = chromosomes.get(0);
+        for (Chromosome c : chromosomes) {
+            if (c.fitness() > best.fitness()) {
+                best = c;
+            }
+        }
+        return best;
     }
 
+
     /**
-     * მეთოდი ადგენს რამდენი პროცენტია დამთხვევა საუკეთესო ვარიანტების
+     * მეთოდი ადგენს პოპულაციაში რამდენჯერ მეორდება "საუკეთესო"
+     * ინდივიდის ფიტნესი.
      *
-     * @param arr ფიტნესების სია
-     * @return დამთხვევა
+     * @return პროცენტულად საუკეთესოს დამთხვევა
      */
     private static Double percentageOfSames(ArrayList<Integer> arr) {
         int max = arr.get(0);
@@ -74,109 +207,4 @@ public class GA {
         }
         return (double) x / arr.size();
     }
-
-    /**
-     * მუტაციის მეთოდი
-     *
-     * @param chromosome ქრომოსომა რომელისთვისაც ხდება მუტაცია
-     * @return ახალი ქრომოსომა
-     */
-    private static Chromosome mutation(Chromosome chromosome) {
-        for (int i = 0; i < chromosome.getGenes().size(); i++) {
-            chromosome.getGenes().set(i, !chromosome.getGenes().get(i));
-        }
-        return chromosome;
-    }
-
-    /**
-     * ამორჩევა რულტკის პრინციპით
-     *
-     * @param population პოპულაცია საიდანაც ხდება ამორჩევა
-     * @param fitnesses ფიტნესები პოპულაციაში
-     */
-    private static void RouletteWheelSelection(ArrayList<Integer> fitnesses) {
-        int fSum = 0;
-        for (int x : fitnesses) {
-            fSum += x;
-        }
-        Random r = new Random();
-        int s = r.nextInt(fSum);
-        int i = 0;
-        while (true) {
-            s = s - fitnesses.get(i);
-            if (s < 0) {
-                break;
-            }
-            i++;
-        }
-        int j = 0;
-        s = r.nextInt(fSum);
-        while (true) {
-            s = s - fitnesses.get(j);
-            if (s < 0) {
-                break;
-            }
-            j++;
-        }
-
-        crossover(i, j);
-    }
-
-    /**
-     * შერყწმის ოპერაცია
-     *
-     * @param i პირველი ქრომოსომის ინდექსი
-     * @param j მეორე ქრომოსომის ინდექსი
-     * @param population პოპულაცია სადაც ხდება შერწყმა
-     */
-    private static void crossover(int i, int j) {
-        Chromosome p1 = population.getChromosomes().get(i);
-        Chromosome p2 = population.getChromosomes().get(j);
-        Random r = new Random();
-        int x = r.nextInt(Data.numberOfItems);
-        Chromosome c1 = new Chromosome(Data.numberOfItems);
-        Chromosome c2 = new Chromosome(Data.numberOfItems);
-        for (int k = 0; k < x; k++) {
-            c1.getGenes().set(k, p1.getGenes().get(k));
-        }
-        for (int k = x; k < Data.numberOfItems; k++) {
-            c1.getGenes().set(k, p2.getGenes().get(k));
-        }
-        for (int k = 0; k < x; k++) {
-            c2.getGenes().set(k, p2.getGenes().get(k));
-        }
-        for (int k = x; k < Data.numberOfItems; k++) {
-            c2.getGenes().set(k, p1.getGenes().get(k));
-        }
-        survivorSelection(c1, c2);
-    }
-
-    private static void survivorSelection(Chromosome c1, Chromosome c2) {
-        int m1 = 0;
-        for (int i = 0; i<fitnessList.size(); i++) {
-            if (fitnessList.get(i) < fitnessList.get(m1)) {
-                m1 = i;
-            }
-        }
-        int m2 = 0;
-        for (int i = 0; i<fitnessList.size(); i++) {
-            if (m1 != i && fitnessList.get(i) < fitnessList.get(m2)) {
-                m2 = i;
-            }
-        }
-        population.getChromosomes().set(m1, c1);
-        population.getChromosomes().set(m2, c2);
-    }
-
-    private static Chromosome getBestAnswer() {
-        ArrayList<Chromosome> chromosomes = population.getChromosomes();
-        Chromosome best = chromosomes.get(0);
-        for (Chromosome c : chromosomes) {
-            if (c.fitness() > best.fitness()) {
-                best = c;
-            }
-        }
-        return best;
-    }
-
 }

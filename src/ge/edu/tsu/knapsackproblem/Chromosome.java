@@ -3,36 +3,23 @@ package ge.edu.tsu.knapsackproblem;
 import java.util.ArrayList;
 import java.util.Random;
 
-/**
- *
- * @author IGobronidze
- */
 public class Chromosome {
 
-    private int size;
-    private ArrayList<Boolean> genes;
+    private ArrayList<Boolean> genes;      // გენები (0 ან 1)
 
     public Chromosome() {
+        genes = new ArrayList<Boolean>();
     }
 
     public Chromosome(int size) {
-        genes = new ArrayList<Boolean>();
+        this();
         for (int i = 0; i < size; i++) {
             genes.add(Boolean.FALSE);
         }
     }
 
-    public Chromosome(int size, ArrayList<Boolean> genes) {
-        this.size = size;
+    public Chromosome(ArrayList<Boolean> genes) {
         this.genes = genes;
-    }
-
-    public int getSize() {
-        return size;
-    }
-
-    public void setSize(int size) {
-        this.size = size;
     }
 
     public ArrayList<Boolean> getGenes() {
@@ -44,7 +31,7 @@ public class Chromosome {
     }
 
     /**
-     * მეთოდი ადგენს შემთხვევით ქრომოსომას
+     * მეთოდი შემთქვევითად ქმნის ქრომოსომას.
      *
      * @return შემთქვევითად შექმნილი ქრომოსომა
      */
@@ -58,49 +45,42 @@ public class Chromosome {
     }
 
     /**
-     * ფიტნეს ფუნქცია. ჯამი ყველა ჩაგდებული ნივთის
+     * ფიტნეს ფუნქცია - ჯამი ყველა ჩაგდებული ნივთის.
+     * ასევე მოწმდება ნივთების ჯამური მოცულობა, თუ ის აღემატება
+     * ჩანთის მოცულობას, ფიტნეს ფუნქცია ხდება -1.
      *
-     * @return ფიტენს ფუნქციის მნიშვნელობაs
+     * @return ფიტნეს ფუნქციის მნიშვნელობა
      */
     public int fitness() {
         ArrayList<Item> items = Data.items;
         int volume = 0;
         for (int i = 0; i<Data.numberOfItems; i++) {
-            volume += items.get(i).getV() * (genes.get(i) ? 1 : 0);
+            volume += items.get(i).getVolume()* (genes.get(i) ? 1 : 0);
         }
         if (volume > Data.knapsackVolume) {
             return -1;
         }
         int fitness = 0;
         for (int i = 0; i < Data.numberOfItems; i++) {
-            fitness += items.get(i).getB() * (genes.get(i) ? 1 : 0);
+            fitness += items.get(i).getPrice()* (genes.get(i) ? 1 : 0);
         }
         return fitness;
     }
-
-    /**
-     * მეთოდი ადგენს ჩაგდებული ნივთების დაკავებულ მოცულობას. ეს მოცულობა ვერ
-     * იქნება საერთო მოცულობაზე მეტი, ხდება ამის კონტროლო
-     *
-     * @return ქრომოსომით მიღებული ნივთების მოცულობა
-     */
-    public int totalVolume() {
-        int v = 0;
+    
+    @Override
+    public String toString() {
         ArrayList<Item> items = Data.items;
+        int volume = 0;
+        for (int i = 0; i<Data.numberOfItems; i++) {
+            volume += items.get(i).getVolume()* (genes.get(i) ? 1 : 0);
+        }
+        int fitness = 0;
         for (int i = 0; i < Data.numberOfItems; i++) {
-            v += items.get(i).getV() * (genes.get(i) ? 1 : 0);
+            fitness += items.get(i).getPrice()* (genes.get(i) ? 1 : 0);
         }
-        if (v > Data.knapsackVolume) {
-            Random r = new Random();
-            while (true) {
-                int x = r.nextInt(size);
-                if (genes.get(x)) {
-                    genes.set(x, Boolean.FALSE);
-                    return this.totalVolume();
-                }
-            }
-
-        }
-        return v;
+        String text = "";
+        text += "დაკავებული მოცულობა - " + volume + "     " +
+                "ჯამური ფასი - " + fitness + "     ";
+        return text;
     }
 }

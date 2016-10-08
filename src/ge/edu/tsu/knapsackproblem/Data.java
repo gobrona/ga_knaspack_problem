@@ -2,18 +2,17 @@ package ge.edu.tsu.knapsackproblem;
 
 import java.util.ArrayList;
 
-/**
- *
- * @author IGobronidze
- */
 public class Data {
 
-    public static final int numberOfItems = 20;                      // ნივთების რაოდენობა
-    public static final int knapsackVolume = 100;                    // ჩანთის მოცულობა
-    public static final int numberOfChromosomes = 100;               // ქრომოსომების რაოდენობა პოპულაციაში              
-    public static ArrayList<Item> items = new ArrayList<Item>();     // ნივთების მოცულობა და ფასი
+    public static final int numberOfItems = 20;                       // ნივთების რაოდენობა
+    public static final int knapsackVolume = 100;                     // ჩანთის მოცულობა
+    public static final int numberOfChromosomes = 1000;               // ქრომოსომების რაოდენობა პოპულაციაში              
+    public static double mutationProbability = 0.2;                   // მუტაციის ალბათობა ახალი თაობის მიღებისას
+    public static double goalCondition = 0.98;                        // მიზნის სისწორის შესამოწმებელი პროცენტი
     
-    public static long sleepTimeBeteenIteration = 100;               // იტერაციებს შორის პერიოდი
+    public static ArrayList<Item> items = new ArrayList<Item>();      // ნივთების მოცულობა და ფასი
+    
+    public static long sleepTimeBeteenIteration = 20;                 // იტერაციებს შორის პერიოდი
     
     // ნივთების ინიციალიზაციას
     static {
