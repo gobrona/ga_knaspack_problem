@@ -25,7 +25,7 @@ public class Population {
      */
     public static Population initPopulation() {
         Population p = new Population();
-        for (int i = 0; i < DataCreator.numberOfChromosomes; i++) {
+        for (int i = 0; i < Data.numberOfChromosomes; i++) {
             p.getChromosomes().add(Chromosome.getRandomChromosome());
         }
         return p;

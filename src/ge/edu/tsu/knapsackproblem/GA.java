@@ -8,23 +8,27 @@ import java.util.Random;
  * @author IGobronidze
  */
 public class GA {
-
+    
+    private static long generation = 0;
+    
+    private static Population population;
+    private static ArrayList<Integer> fitnessList;
+    
     /**
-     * GA ალგორითმი. ალგორითმი ეძებს საუკეთესო გამოსავალს, მაქსიმუმად გაავსოს
-     * ზურგჩანთა ნივთებით, სიე რომ არ აცდეს ზღვარს
+     * GA ალგორითმი. ალგორითმი ეძებს საუკეთესო გამოსავალს, მასიმალურად გაავსოს
+     * ზურგჩანთა ნივთებით ისე, რომ არ ასცდეს ზღვარს
      *
-     * @return მაქსიმალური შევსების რაოდენობა
      */
-    public static Chromosome algorithm() {
-        DataCreator.initItems();                                     // მონაცემების ინიცილიზაცია
-        Population population = Population.initPopulation();         // საწყისი პოპულაცია
+    public static void solveProblem() {
+        population = Population.initPopulation();         // საწყისი პოპულაცია
         while (true) {
+            generation++;
             int min = Integer.MAX_VALUE;
             int m = 0;
             int k = 0;
-            ArrayList<Integer> fitnesses = new ArrayList<Integer>();
+            fitnessList = new ArrayList<Integer>();
             for (Chromosome c : population.getChromosomes()) {
-                fitnesses.add(c.fitness());
+                fitnessList.add(c.fitness());
                 if (c.fitness() < min) {
                     m = k;
                     min = c.fitness();
@@ -33,18 +37,20 @@ public class GA {
             }
             mutation(population.getChromosomes().get(m));
             try {
-                Thread.sleep(100);
+                Thread.sleep(Data.sleepTimeBeteenIteration);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("საუკეთესო ინდივიდი - " + getBestAnswer(population).fitness() + "   ალბათობა პოპულაციაში - " + percentageOfSames(fitnesses));
-            if (percentageOfSames(fitnesses) >= 0.95) {
+            System.out.println("საუკეთესო ინდივიდი - " + getBestAnswer().fitness() + 
+                    "      ალბათობა პოპულაციაში - " + percentageOfSames(fitnessList) + "      თაობა - " + generation);
+            if (percentageOfSames(fitnessList) >= 0.95) {
                 break;
             }
-            RouletteWheelSelection(population, fitnesses);
+            RouletteWheelSelection(fitnessList);
         }
 
-        return getBestAnswer(population);
+        System.out.println(System.lineSeparator() + "საუკეთესო ინდივიდი - " + getBestAnswer().fitness() + 
+                "      საჭირო თაობების რაოდენობა " + generation);
     }
 
     /**
@@ -88,7 +94,7 @@ public class GA {
      * @param population პოპულაცია საიდანაც ხდება ამორჩევა
      * @param fitnesses ფიტნესები პოპულაციაში
      */
-    private static void RouletteWheelSelection(Population population, ArrayList<Integer> fitnesses) {
+    private static void RouletteWheelSelection(ArrayList<Integer> fitnesses) {
         int fSum = 0;
         for (int x : fitnesses) {
             fSum += x;
@@ -113,7 +119,7 @@ public class GA {
             j++;
         }
 
-        crossover(i, j, population, fitnesses);
+        crossover(i, j);
     }
 
     /**
@@ -123,38 +129,38 @@ public class GA {
      * @param j მეორე ქრომოსომის ინდექსი
      * @param population პოპულაცია სადაც ხდება შერწყმა
      */
-    private static void crossover(int i, int j, Population population, ArrayList<Integer> fitnesses) {
+    private static void crossover(int i, int j) {
         Chromosome p1 = population.getChromosomes().get(i);
         Chromosome p2 = population.getChromosomes().get(j);
         Random r = new Random();
-        int x = r.nextInt(DataCreator.numberOfItems);
-        Chromosome c1 = new Chromosome(DataCreator.numberOfItems);
-        Chromosome c2 = new Chromosome(DataCreator.numberOfItems);
+        int x = r.nextInt(Data.numberOfItems);
+        Chromosome c1 = new Chromosome(Data.numberOfItems);
+        Chromosome c2 = new Chromosome(Data.numberOfItems);
         for (int k = 0; k < x; k++) {
             c1.getGenes().set(k, p1.getGenes().get(k));
         }
-        for (int k = x; k < DataCreator.numberOfItems; k++) {
+        for (int k = x; k < Data.numberOfItems; k++) {
             c1.getGenes().set(k, p2.getGenes().get(k));
         }
         for (int k = 0; k < x; k++) {
             c2.getGenes().set(k, p2.getGenes().get(k));
         }
-        for (int k = x; k < DataCreator.numberOfItems; k++) {
+        for (int k = x; k < Data.numberOfItems; k++) {
             c2.getGenes().set(k, p1.getGenes().get(k));
         }
-        survivorSelection(c1, c2, population, fitnesses);
+        survivorSelection(c1, c2);
     }
 
-    private static void survivorSelection(Chromosome c1, Chromosome c2, Population population, ArrayList<Integer> fitnesses) {
+    private static void survivorSelection(Chromosome c1, Chromosome c2) {
         int m1 = 0;
-        for (int i = 0; i<fitnesses.size(); i++) {
-            if (fitnesses.get(i) < fitnesses.get(m1)) {
+        for (int i = 0; i<fitnessList.size(); i++) {
+            if (fitnessList.get(i) < fitnessList.get(m1)) {
                 m1 = i;
             }
         }
         int m2 = 0;
-        for (int i = 0; i<fitnesses.size(); i++) {
-            if (m1 != i && fitnesses.get(i) < fitnesses.get(m2)) {
+        for (int i = 0; i<fitnessList.size(); i++) {
+            if (m1 != i && fitnessList.get(i) < fitnessList.get(m2)) {
                 m2 = i;
             }
         }
@@ -162,7 +168,7 @@ public class GA {
         population.getChromosomes().set(m2, c2);
     }
 
-    private static Chromosome getBestAnswer(Population population) {
+    private static Chromosome getBestAnswer() {
         ArrayList<Chromosome> chromosomes = population.getChromosomes();
         Chromosome best = chromosomes.get(0);
         for (Chromosome c : chromosomes) {

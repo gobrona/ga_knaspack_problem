@@ -50,8 +50,8 @@ public class Chromosome {
      */
     public static Chromosome getRandomChromosome() {
         Random r = new Random();
-        Chromosome c = new Chromosome(DataCreator.numberOfItems);
-        for (int i = 0; i < DataCreator.numberOfItems; i++) {
+        Chromosome c = new Chromosome(Data.numberOfItems);
+        for (int i = 0; i < Data.numberOfItems; i++) {
             c.getGenes().set(i, r.nextBoolean());
         }
         return c;
@@ -63,27 +63,34 @@ public class Chromosome {
      * @return ფიტენს ფუნქციის მნიშვნელობაs
      */
     public int fitness() {
-        int f = 0;
-        ArrayList<Item> items = DataCreator.knapsack.getItems();
-        for (int i = 0; i < DataCreator.numberOfItems; i++) {
-            f += items.get(i).getB() * (genes.get(i) ? 1 : 0);
+        ArrayList<Item> items = Data.items;
+        int volume = 0;
+        for (int i = 0; i<Data.numberOfItems; i++) {
+            volume += items.get(i).getV() * (genes.get(i) ? 1 : 0);
         }
-        return f;
+        if (volume > Data.knapsackVolume) {
+            return -1;
+        }
+        int fitness = 0;
+        for (int i = 0; i < Data.numberOfItems; i++) {
+            fitness += items.get(i).getB() * (genes.get(i) ? 1 : 0);
+        }
+        return fitness;
     }
 
     /**
      * მეთოდი ადგენს ჩაგდებული ნივთების დაკავებულ მოცულობას. ეს მოცულობა ვერ
-     * იქნება საერო მოცულობაზე მეტი, ხდება ამის კონტროლო
+     * იქნება საერთო მოცულობაზე მეტი, ხდება ამის კონტროლო
      *
      * @return ქრომოსომით მიღებული ნივთების მოცულობა
      */
     public int totalVolume() {
         int v = 0;
-        ArrayList<Item> items = DataCreator.knapsack.getItems();
-        for (int i = 0; i < DataCreator.numberOfItems; i++) {
+        ArrayList<Item> items = Data.items;
+        for (int i = 0; i < Data.numberOfItems; i++) {
             v += items.get(i).getV() * (genes.get(i) ? 1 : 0);
         }
-        if (v > DataCreator.knapsackVolume) {
+        if (v > Data.knapsackVolume) {
             Random r = new Random();
             while (true) {
                 int x = r.nextInt(size);
@@ -96,10 +103,4 @@ public class Chromosome {
         }
         return v;
     }
-
-    @Override
-    public String toString() {
-        return "Chromosome{" + "genes=" + genes + '}';
-    }
-
 }

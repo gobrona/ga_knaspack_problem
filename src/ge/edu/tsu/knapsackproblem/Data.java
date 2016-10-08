@@ -6,15 +6,17 @@ import java.util.ArrayList;
  *
  * @author IGobronidze
  */
-public class DataCreator {
+public class Data {
 
-    public static final int numberOfItems = 20;
-    public static final int knapsackVolume = 100;
-    public static final int numberOfChromosomes = 100;
-    public static ArrayList<Item> items = new ArrayList<Item>();
-    public static Knapsack knapsack = new Knapsack();
-
-    public static void initItems() {
+    public static final int numberOfItems = 20;                      // ნივთების რაოდენობა
+    public static final int knapsackVolume = 100;                    // ჩანთის მოცულობა
+    public static final int numberOfChromosomes = 100;               // ქრომოსომების რაოდენობა პოპულაციაში              
+    public static ArrayList<Item> items = new ArrayList<Item>();     // ნივთების მოცულობა და ფასი
+    
+    public static long sleepTimeBeteenIteration = 100;               // იტერაციებს შორის პერიოდი
+    
+    // ნივთების ინიციალიზაციას
+    static {
         items.add(new Item(7, 13));
         items.add(new Item(10, 12));
         items.add(new Item(15, 7));
@@ -35,7 +37,5 @@ public class DataCreator {
         items.add(new Item(18, 17));
         items.add(new Item(11, 21));
         items.add(new Item(20, 20));
-        knapsack.setItems(items);
     }
-
 }
